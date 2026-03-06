@@ -313,24 +313,19 @@ def generate_tweet(arc: Dict) -> str:
         if chaos_roll < chaos_probability:
             # CHAOS MODE
             base_text = generate_chaos_event(arc)
-            tweet_text = f"🌪️ CHAOS: {base_text}"
+            tweet_text = f": {base_text}"
         else:
             # STORY MODE
             character = pick_character(arc)
             action = apply_character_logic(character, arc, current_act)
-            tweet_text = f"🎙️ NARRATOR: {action}"
+            tweet_text = f": {action}"
 
         # Check length + constraints
         if len(tweet_text) > 280:
             tweet_text = tweet_text[:277] + "..."
 
         if not _passes_constraints(tweet_text, arc):
-            continue
-
-        # Optionally inject required refs if below threshold
-        if _count_refs(tweet_text, arc["required_refs"]) < min_refs:
-            ref = random.choice(arc["required_refs"])
-            tweet_text = f"{tweet_text} ({ref})"
+            continue 
 
         if len(tweet_text) <= 280:
             candidates.append(tweet_text)
@@ -381,7 +376,7 @@ def main():
             print("⚠️  No Twitter client available (missing credentials or tweepy)")
     except Exception as e:
         print(f"⚠️  Error: {e}")
-        print("💡 For local testing, run: python tweet_engine.py --dry-run")
+        print("💡 For local testing, run: python tweetEngine.py --dry-run")
 
 
 if __name__ == "__main__":

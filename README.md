@@ -74,3 +74,13 @@ GPT-5 executes a scheme
 It hilariously fails (chaos events)
 Everyone tweets about the chaos
 Rinse + repeat next week
+
+Why the current script uses "Randomization"
+
+The current Python script uses Procedural Generation. It works like a deck of cards:
+The Deck: Your storyarc.json is the deck.
+The Shuffle: random.choice() and random.random() are the shuffle.
+The Result: It picks a character, then a pre-defined action, then a random "chaos" modifier.
+
+The Pros: It’s free, it’s lightning-fast, and it never goes "off-script." You have 100% control over the narrative.
+The Cons: As you noticed, it can feel repetitive. After 50 tweets, the "NARRATOR" and "CHAOS" patterns become obvious.
