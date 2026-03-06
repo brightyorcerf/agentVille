@@ -4,6 +4,8 @@ A lightweight Twitter/X bot that generates **new** “narrator” tweets each ru
 
 It reads a weekly config from `storyarc.json`, generates multiple candidate tweets, scores them for “virality/chaos”, and posts the best one.
 
+![image](image.jpg)
+
 ## Files
 
 - `tweetEngine.py`: the bot
