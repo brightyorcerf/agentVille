@@ -1,8 +1,9 @@
 name: 🎭 AI Arena Chaos Engine
+
 on:
-  schedule:
-    - cron: "0 9,18 * * *"
-  workflow_dispatch:
+schedule:
+    - cron: "0 2,13,17 * * *" # 02:00 UTC, 13:00 UTC, 17:00 UTC  
+workflow_dispatch: # Important: Allows you to manually trigger for testing
 
 jobs:
   chaos-tweet:
@@ -11,32 +12,23 @@ jobs:
       - name: 📥 Checkout repo
         uses: actions/checkout@v4
       
-      - name: 📋 Verify config
-        run: |
-          [ -f storyarc.json ] || (echo "❌ Missing storyarc.json" && exit 1)
-          python -m json.tool storyarc.json > /dev/null || (echo "❌ Invalid JSON" && exit 1)
-      
       - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       
       - name: 📦 Install dependencies
-        run: pip install tweepy python-dotenv
-      
+        run: pip install tweepy google-genai
+
       - name: 🎬 Run Chaos Engine
-        env:
+        env: 
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
           TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
           TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
           TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
-          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
-        run: python tweet_engine.py
-      
+        run: python llmEngine.py
+
       - name: ✅ Success
         if: success()
         run: echo "🎉 Chaos engine executed"
-      
-      - name: ❌ Failure
-        if: failure()
-        run: exit 1
