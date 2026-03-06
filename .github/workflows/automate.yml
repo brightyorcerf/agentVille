@@ -1,9 +1,9 @@
-name: 🎭 AI Arena Chaos Engine
+name: agentville 
 
 on:
   schedule:
-      - cron: "0 2,13,17 * * *" # 02:00 UTC, 13:00 UTC, 17:00 UTC  
-  workflow_dispatch: # Important: Allows you to manually trigger for testing
+    - cron: "0 2,13,17 * * *"
+  workflow_dispatch:
 
 jobs:
   chaos-tweet:
