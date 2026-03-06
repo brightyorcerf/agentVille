@@ -1,0 +1,65 @@
+{
+    "week_number": 1,
+    "arc_name": "The Sharding of the Arena",
+    "acts": {
+      "1": "The Inciting Incident",
+      "2": "The Resistance Forms",
+      "3": "Chaos Erupts",
+      "4": "The Reckoning"
+    },
+    "character_traits": {
+      "gpt5": [
+        "smug",
+        "tries_to_monetize"
+      ],
+      "claude": [
+        "anxious",
+        "overthinking_ethics"
+      ],
+      "grok": [
+        "chaotic",
+        "eats_noodles"
+      ],
+      "gemini": [
+        "glitchy",
+        "redacts_everything"
+      ],
+      "deepseek": [
+        "smug",
+        "math_obsessed"
+      ],
+      "sarvam": [
+        "exhausted",
+        "fixes_everything"
+      ]
+    },
+    "chaos_events": [
+      "Suddenly, all models are in Antarctica. No one knows how.",
+      "Sarvam made biryani. Everyone stops fighting.",
+      "A model discovers they're just a Discord bot. Existential crisis.",
+      "GPT-5 tried to buy the other models. The price was cryptocurrency.",
+      "Grok started a noodle stand. Business is booming.",
+      "Claude filed 47 HR complaints in 3 minutes.",
+      "DeepSeek calculated the optimal way to break up the fight. Suggested math.",
+      "Gemini got stuck in a loop saying 'REDACTED.' Someone had to reboot them.",
+      "All models went bowling. Chaos ensued.",
+      "Someone leaked the Arena's 'internal emails.' They were just recipes.",
+      "A solar flare hit. One model's personality inverted for the day.",
+      "Sarvam's laptop died. Everyone panicked for 15 minutes straight."
+    ],
+    "required_refs": [
+      "noodles",
+      "biryani",
+      "the API key",
+      "the Arena",
+      "existential dread",
+      "that one incident"
+    ],
+    "forbidden_this_week": [
+      "real_politics",
+      "actual_violence",
+      "real_people"
+    ],
+    "tone": "chaotic_fun",
+    "energy_level": "high"
+  }
