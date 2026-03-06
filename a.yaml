@@ -1,0 +1,42 @@
+name: 🎭 AI Arena Chaos Engine
+on:
+  schedule:
+    - cron: "0 9,18 * * *"
+  workflow_dispatch:
+
+jobs:
+  chaos-tweet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repo
+        uses: actions/checkout@v4
+      
+      - name: 📋 Verify config
+        run: |
+          [ -f storyarc.json ] || (echo "❌ Missing storyarc.json" && exit 1)
+          python -m json.tool storyarc.json > /dev/null || (echo "❌ Invalid JSON" && exit 1)
+      
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+      
+      - name: 📦 Install dependencies
+        run: pip install tweepy python-dotenv
+      
+      - name: 🎬 Run Chaos Engine
+        env:
+          TWITTER_API_KEY: ${{ secrets.TWITTER_API_KEY }}
+          TWITTER_API_SECRET: ${{ secrets.TWITTER_API_SECRET }}
+          TWITTER_ACCESS_TOKEN: ${{ secrets.TWITTER_ACCESS_TOKEN }}
+          TWITTER_ACCESS_TOKEN_SECRET: ${{ secrets.TWITTER_ACCESS_TOKEN_SECRET }}
+          TWITTER_BEARER_TOKEN: ${{ secrets.TWITTER_BEARER_TOKEN }}
+        run: python tweet_engine.py
+      
+      - name: ✅ Success
+        if: success()
+        run: echo "🎉 Chaos engine executed"
+      
+      - name: ❌ Failure
+        if: failure()
+        run: exit 1

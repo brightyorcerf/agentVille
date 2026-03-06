@@ -1,3 +1,66 @@
+# Setup Guide (brief)
+
+This project is intentionally minimal: you only need `tweetEngine.py` + `storyarc.json` (+ these docs).
+
+## 1) Create a bot account + get API keys
+
+Create an X/Twitter bot account, then create a developer app and generate:
+
+- API Key / API Secret
+- Access Token / Access Token Secret
+- Bearer Token
+
+## 2) Local test (recommended)
+
+### Dry run (no posting)
+
+```bash
+python3 tweetEngine.py --dry-run
+```
+
+### Real posting from your machine
+
+Install dependency:
+
+```bash
+python3 -m pip install tweepy
+```
+
+Export env vars (example using zsh):
+
+```bash
+export TWITTER_API_KEY="..."
+export TWITTER_API_SECRET="..."
+export TWITTER_ACCESS_TOKEN="..."
+export TWITTER_ACCESS_TOKEN_SECRET="..."
+export TWITTER_BEARER_TOKEN="..."
+```
+
+Run:
+
+```bash
+python3 tweetEngine.py
+```
+
+## 3) GitHub Actions (outline)
+
+Create a workflow that:
+
+- checks out the repo
+- installs Tweepy
+- runs `python3 tweetEngine.py`
+
+Add the same `TWITTER_*` values as **GitHub Actions Secrets**.
+
+## 4) Edit your weekly arc
+
+Update `storyarc.json`:
+
+- `arc_name` + `acts`
+- exactly **5** entries under `characters` (each has `traits` + `description`)
+- add new `chaos_events`
+- update `required_refs`
+
 # 🚀 AI Arena Setup Guide
 
 ## Step 1: Create a Twitter/X Bot Account (5 min)
