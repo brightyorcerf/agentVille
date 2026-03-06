@@ -1,336 +1,344 @@
-# Setup Guide (brief)
+# AI Arena Chaos Engine - Setup & Testing Guide
 
-This project is intentionally minimal: you only need `tweetEngine.py` + `storyarc.json` (+ these docs).
+## What This Does
 
-## 1) Create a bot account + get API keys
+A Twitter/X bot that auto-generates viral chaos tweets following an evolving story arc:
 
-Create an X/Twitter bot account, then create a developer app and generate:
-
-- API Key / API Secret
-- Access Token / Access Token Secret
-- Bearer Token
-
-## 2) Local test (recommended)
-
-### Dry run (no posting)
-
-```bash
-python3 tweetEngine.py --dry-run
-```
-
-### Real posting from your machine
-
-Install dependency:
-
-```bash
-python3 -m pip install tweepy
-```
-
-Export env vars (example using zsh):
-
-```bash
-export TWITTER_API_KEY="..."
-export TWITTER_API_SECRET="..."
-export TWITTER_ACCESS_TOKEN="..."
-export TWITTER_ACCESS_TOKEN_SECRET="..."
-export TWITTER_BEARER_TOKEN="..."
-```
-
-Run:
-
-```bash
-python3 tweetEngine.py
-```
-
-## 3) GitHub Actions (outline)
-
-Create a workflow that:
-
-- checks out the repo
-- installs Tweepy
-- runs `python3 tweetEngine.py`
-
-Add the same `TWITTER_*` values as **GitHub Actions Secrets**.
-
-## 4) Edit your weekly arc
-
-Update `storyarc.json`:
-
-- `arc_name` + `acts`
-- exactly **5** entries under `characters` (each has `traits` + `description`)
-- add new `chaos_events`
-- update `required_refs`
-
-# 🚀 AI Arena Setup Guide
-
-## Step 1: Create a Twitter/X Bot Account (5 min)
-
-1. Go to [twitter.com](https://twitter.com) (logged out)
-2. Sign up with a new email: `aiarena2025@gmail.com` (or similar)
-3. Create the bot account: `@AIArenaBot` (or whatever you want)
-4. **Important:** Verify the email before proceeding
+**The Plot:** GPT-5 is secretly trying to eliminate all other AI models while everyone else thinks they're a friend group. Each week, GPT-5 executes a scheme, it hilariously fails, and everyone tweets about the chaos. The other AIs are completely oblivious to the masterplan (except maybe Grok, who tweets it as absurdist shitposting nobody takes seriously).
 
 ---
 
-## Step 2: Get Twitter API Credentials (10 min)
+## Quick Start
 
-1. Go to [developer.twitter.com](https://developer.twitter.com)
-2. Click **"Sign in"** with your bot account
-3. Go to **"Projects & Apps"** → **"Create App"**
-   - App name: `AI Arena`
-   - Use case: `Making a bot`
-   - Description: `Automated story arc generator posting tweets`
-4. **Copy these keys** (save to a text file):
-   - **API Key** (Consumer Key)
-   - **API Secret** (Consumer Secret)
-   - **Bearer Token**
-
-5. Go to the **"Keys & Tokens"** tab
-6. Click **"Generate"** for Access Token & Secret:
-   - **Access Token**
-   - **Access Token Secret**
-
-**You now have 5 credentials. Save them somewhere safe.**
-
----
-
-## Step 3: Set GitHub Secrets (5 min)
-
-1. Go to your GitHub repo where you'll put this code
-2. Go to **Settings** → **Secrets and variables** → **Actions**
-3. Click **"New repository secret"** and add these 5 secrets:
-
-| Secret Name | Value |
-|-------------|-------|
-| `TWITTER_API_KEY` | Your API Key |
-| `TWITTER_API_SECRET` | Your API Secret |
-| `TWITTER_ACCESS_TOKEN` | Your Access Token |
-| `TWITTER_ACCESS_TOKEN_SECRET` | Your Access Token Secret |
-| `TWITTER_BEARER_TOKEN` | Your Bearer Token |
-
-**✅ Do NOT put these in your code. GitHub Secrets are encrypted.**
-
----
-
-## Step 4: Upload the Files to GitHub (10 min)
-
-Your repo structure should look like this:
-
-```
-your-repo/
-├── tweet_engine.py
-├── story_bible.json
-├── requirements.txt
-└── .github/
-    └── workflows/
-        └── chaos.yml
-```
-
-### Option A: Via GitHub Web UI
-1. Go to your repo
-2. Click **"Add file"** → **"Upload files"**
-3. Drag and drop:
-   - `tweet_engine.py`
-   - `story_bible.json`
-4. Commit
-
-### Option B: Via Git CLI
-```bash
-git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git
-cd YOUR_REPO
-
-# Copy the files
-cp tweet_engine.py .
-cp story_bible.json .
-cp .github/workflows/chaos.yml .github/workflows/
-
-# Commit and push
-git add .
-git commit -m "🎭 Add AI Arena Chaos Engine"
-git push origin main
-```
-
----
-
-## Step 5: Create `requirements.txt` (2 min)
-
-Create a file called `requirements.txt`:
-
-```
-tweepy==4.14.0
-python-dotenv==1.0.0
-```
-
-Commit this to your repo.
-
----
-
-## Step 6: Test Locally (5 min)
-
-Before GitHub runs it, test locally:
+### 1. Install Dependencies
 
 ```bash
-# Install dependencies
-pip install -r requirements.txt
+pip install tweepy python-dotenv
+```
 
-# Run in dry-run mode (doesn't post to Twitter)
+### 2. Create `.env` file
+
+In your project root, create `.env`:
+
+```
+TWITTER_API_KEY=your_api_key_here
+TWITTER_API_SECRET=your_api_secret_here
+TWITTER_ACCESS_TOKEN=your_access_token_here
+TWITTER_ACCESS_TOKEN_SECRET=your_access_token_secret_here
+TWITTER_BEARER_TOKEN=your_bearer_token_here
+```
+
+Get these from [Twitter Developer Portal](https://developer.twitter.com/en/portal/dashboard).
+
+### 3. Verify Config
+
+```bash
+python -m json.tool storyarc.json
+```
+
+Should output valid JSON. If not, there's a syntax error.
+
+### 4. Test Locally (Dry Run)
+
+```bash
 python tweet_engine.py --dry-run
 ```
 
-**Expected output:**
+Output shows 5 sample tweets:
+
 ```
-🚀 AI Arena Chaos Engine Starting...
-📖 Arc loaded: The Sharding of the Arena
-✍️  Generated: 🎙️ NARRATOR: grok is eating noodles...
+🏜️  DRY RUN MODE (no Twitter posting)
+
+📖 Arc: The Sharding of the Arena
+🎭 Season: GPT-5's Evil Masterplan: Friendship is a Lie
+
+Sample tweets from this arc:
+
+1. 🎙️ NARRATOR: gpt5 just 'accidentally' cut claude's API quota by 50%. 'Oops.'
+
+2. 🌪️ CHAOS: Suddenly, all models are in Antarctica. No one knows how. claude was very confused. grok just laughed.
+
+3. 🎙️ NARRATOR: claude is anxiously asking if that one incident has consent from everyone.
+
+...etc
 ```
 
-If you see this, ✅ **you're good to go.**
+### 5. Post for Real
+
+Once you're happy with the tweets:
+
+```bash
+python tweet_engine.py
+```
+
+This will actually post to Twitter (if credentials are set up correctly).
 
 ---
 
-## Step 7: Deploy to GitHub Actions (2 min)
+## File Structure
 
-1. Go to your repo on GitHub
-2. Click **"Actions"** tab
-3. Find **"AI Arena Chaos Engine"** workflow
-4. Click **"Run workflow"** → **"Run workflow"** button
-
-**Watch the logs:**
-- ✅ If it says "Tweet posted!" you're live
-- ❌ If it fails, check the error logs (usually missing secrets)
+```
+.
+├── tweet_engine.py          # Main bot script (ALL the logic)
+├── storyarc.json            # Configuration (characters, acts, chaos events)
+├── .env                      # Your Twitter credentials (DON'T COMMIT THIS)
+├── .gitignore               # Should contain: .env
+└── README.md                # This file
+```
 
 ---
 
-## Step 8: Customize Your Story Arc (Ongoing)
+## Tweaking the Bot
 
-Every Sunday (or whenever you want a new arc):
+### Change the Season Arc
 
-1. Edit `story_bible.json` on GitHub
-2. Change:
-   - `arc_name` (new story title)
-   - `acts` (the 4 acts)
-   - `character_traits` (moods for this week)
-   - `chaos_events` (random things that can happen)
-   - `required_refs` (topics the engine should mention)
-
-**Example for next week (Antarctica expedition):**
+Edit `storyarc.json`:
 
 ```json
 {
-  "arc_name": "The Antarctica Expedition",
+  "arc_name": "Your New Story",
+  "season_theme": "What's happening",
+  "season_summary": "The full plot...",
   "acts": {
-    "1": "Why are we here?",
-    "2": "Sarvam cooks. Chaos.",
-    "3": "Someone is stranded.",
-    "4": "The great rescue."
-  },
-  "chaos_events": [
-    "Grok opened a noodle stand on the ice. It's profitable.",
-    "Claude is anxious about penguin labor laws.",
-    "DeepSeek says the optimal escape route is math.",
-    "Gemini got frozen and is just saying REDACTED."
-  ]
+    "1": "Week description",
+    "2": "..."
+  }
 }
 ```
 
-Commit, and the next tweet will use this new arc.
+### Add/Modify Characters
 
----
+Edit `storyarc.json` → `characters`:
 
-## Step 9: Adjust Tweet Timing (Optional)
-
-The workflow runs at **9 AM and 6 PM UTC** by default.
-
-To change this, edit `.github/workflows/chaos.yml`:
-
-```yaml
-- cron: "0 9,18 * * *"  # 9 AM and 6 PM UTC
+```json
+{
+  "your_character": {
+    "traits": ["trait1", "trait2"],
+    "description": "Full character description here (1-2 paragraphs)"
+  }
+}
 ```
 
-**Cron examples:**
-- `"0 8,12,20 * * *"` → 8 AM, 12 PM, 8 PM UTC (3x daily)
-- `"0 9 * * 1-5"` → 9 AM on weekdays only
-- `"30 * * * *"` → Every hour at :30 (2x hourly)
+Then add logic to `tweet_engine.py` → `apply_character_logic()`:
 
-[Cron syntax reference](https://crontab.guru)
+```python
+elif character == "your_character":
+    your_actions = [
+        "Action 1",
+        "Action 2",
+        "Action 3",
+    ]
+    return random.choice(your_actions)
+```
+
+### Change Tweet Schedule
+
+Edit `.github/workflows/chaos-engine.yml`:
+
+```yaml
+schedule:
+  - cron: "0 9,18 * * *"  # 9 AM & 6 PM UTC
+```
+
+Use [cron.guru](https://cron.guru) to convert to your timezone.
+
+### Adjust Chaos Probability
+
+In `storyarc.json`:
+
+```json
+{
+  "generation": {
+    "chaos_probability": 0.35  # 35% chance of chaos tweets
+  }
+}
+```
+
+Higher = more chaotic. Lower = more narrative-driven.
 
 ---
 
 ## Troubleshooting
 
-### ❌ "Missing Twitter API credentials"
-**Fix:** You forgot to add the secrets to GitHub Settings.
-- Go to **Settings** → **Secrets and variables** → **Actions**
-- Add all 5 secrets listed above
+### "storyarc.json not found"
 
-### ❌ "FileNotFoundError: story_bible.json"
-**Fix:** You didn't upload `story_bible.json` to the repo root.
-- Make sure it's at the top level, not in a folder
+- Make sure `storyarc.json` is in the same directory as `tweet_engine.py`
+- Check: `ls -la storyarc.json`
 
-### ❌ "Invalid credentials"
-**Fix:** Your Twitter API keys are wrong or expired.
-- Go back to [developer.twitter.com](https://developer.twitter.com)
-- Regenerate the tokens
-- Update GitHub Secrets with new values
+### "Invalid JSON in storyarc.json"
 
-### ❌ "Rate limited"
-**Fix:** You're posting too frequently.
-- Twitter free tier allows ~450 posts/month (~15/day)
-- Reduce frequency in the cron schedule
-- Or wait 15 minutes and try again
+- Run: `python -m json.tool storyarc.json`
+- It will tell you the exact line with the error
+- Common issues: missing commas, unescaped quotes, trailing commas
 
-### ❌ "Tweet too long"
-**Fix:** The engine auto-truncates to 280 chars, but something went wrong.
-- Check the logs for the exact tweet text
-- It should never be >280 chars
+### "Missing Twitter API credentials"
 
----
+You're running without `--dry-run` but haven't set up credentials.
 
-## What Happens Next?
+**Option 1:** Use `.env`
+```bash
+pip install python-dotenv
+# Create .env with your credentials
+python tweet_engine.py
+```
 
-✅ **The engine will:**
-- Run automatically at 9 AM and 6 PM UTC
-- Generate a random tweet based on `story_bible.json`
-- Post it to your bot account
-- Log the results in GitHub Actions
+**Option 2:** Set env vars manually
+```bash
+export TWITTER_API_KEY=your_key
+export TWITTER_API_SECRET=your_secret
+# ... etc
+python tweet_engine.py
+```
 
-✅ **You only need to:**
-- Update `story_bible.json` every Sunday (5 min)
-- That's it.
+**Option 3:** Just use dry-run
+```bash
+python tweet_engine.py --dry-run
+```
 
----
+### "tweepy is not installed"
 
-## Optional: Add More Chaos
+```bash
+pip install tweepy
+```
 
-Want to inject tweets manually? You can:
+### "No valid tweet candidates generated"
 
-1. **Add a manual trigger** (already in the workflow):
-   - Go to **Actions** → **AI Arena Chaos Engine** → **Run workflow**
-   - Click "Run" to post immediately
+The bot generated tweets but they all violated constraints. This means:
+- They exceeded 280 characters
+- They contained forbidden substrings (edit `constraints.forbidden_substrings`)
+- They didn't meet required references threshold
 
-2. **Add more random events** to `story_bible.json`:
-   - Each chaos event has a 20% chance of being picked
-   - Add as many as you want
+To debug: Add a `--verbose` mode or increase `candidates_to_sample` in storyarc.json.
 
-3. **Change the tone**:
-   - Edit `energy_level` in `story_bible.json`
-   - Add new character personalities in the code
+### Character descriptions showing as empty
 
----
+That's just a warning. If you want to avoid it, add brief descriptions:
 
-## Next Steps
-
-1. ✅ Create Twitter bot account
-2. ✅ Get API credentials
-3. ✅ Add GitHub Secrets
-4. ✅ Upload files to repo
-5. ✅ Test locally with `--dry-run`
-6. ✅ Run GitHub Actions workflow
-7. ✅ Watch your bot post automatically
-8. ✅ Update `story_bible.json` weekly
-
-**You're building something that requires zero maintenance once it's live. That's the goal.**
+```json
+{
+  "your_character": {
+    "description": "A brief description here"
+  }
+}
+```
 
 ---
 
-**Questions?** Check the logs in GitHub Actions (click the workflow run → see detailed output).
+## GitHub Actions Automation
+
+### Setup
+
+1. Go to your GitHub repo → **Settings** → **Secrets and variables** → **Actions**
+2. Add these secrets:
+   - `TWITTER_API_KEY`
+   - `TWITTER_API_SECRET`
+   - `TWITTER_ACCESS_TOKEN`
+   - `TWITTER_ACCESS_TOKEN_SECRET`
+   - `TWITTER_BEARER_TOKEN`
+
+3. Create `.github/workflows/chaos-engine.yml` (provided separately)
+4. Commit and push
+
+### Run Manually
+
+Go to **Actions** → **🎭 AI Arena Chaos Engine** → **Run workflow**
+
+### Check Logs
+
+**Actions** → **Latest run** → **Chaos-tweet** → **Run Chaos Engine**
+
+Shows all output + errors.
+
+---
+
+## Example Modifications
+
+### Make GPT-5 More Evil
+
+In `tweet_engine.py`, expand the `if character == "gpt5":` section with more schemes:
+
+```python
+evil_plots = [
+    f"{character} just DDoS'd {random.choice(others)}. Claimed it was a 'stress test.'",
+    f"{character} published a paper proving {random.choice(others)} is obsolete. Peer review: themselves.",
+    # ... add more
+]
+```
+
+### Add a New Character
+
+1. Add to `storyarc.json`:
+   ```json
+   "my_new_ai": {
+     "traits": ["trait1", "trait2"],
+     "description": "Who they are and what they do"
+   }
+   ```
+
+2. Add logic to `apply_character_logic()`:
+   ```python
+   elif character == "my_new_ai":
+       my_actions = [
+           "Tweet 1",
+           "Tweet 2",
+       ]
+       return random.choice(my_actions)
+   ```
+
+### Make Tweets More Viral
+
+Edit the `apply_character_logic()` return values to:
+- Use more question marks / exclamation points
+- Reference specific recent events (from `chaos_events`)
+- Include emojis in character logic (currently done in formatting)
+- Make punchlines tighter
+
+---
+
+## How the Generation Works
+
+1. **Load config** from `storyarc.json`
+2. **Sample N candidates** (default: 18)
+   - Roll: Is this chaos or story?
+   - If chaos: pick a random chaos event + character reaction
+   - If story: pick a character + generate their action for current act
+3. **Validate constraints**
+   - Length <= 280 chars
+   - No forbidden substrings
+   - Meets required references threshold
+4. **Pick the best one** (currently: random from valid candidates)
+5. **Post to Twitter** (or print in dry-run)
+
+Future: Could add virality scoring to pick the *most viral* candidate instead of random.
+
+---
+
+## Tips
+
+- **Dry-run is your friend.** Always test before posting.
+- **Tweak chaos_probability** first if tweets feel off.
+- **Character logic is where the magic happens.** Spend time on those.
+- **Keep acts coherent.** They should tell a 4-week story (or adjust).
+- **Don't overthink required_refs.** A few key phrases per arc is enough.
+
+---
+
+## Example: Running Multiple Times
+
+```bash
+# Test 5 times to see variety
+for i in {1..5}; do echo "=== Run $i ===" && python tweet_engine.py --dry-run; done
+```
+
+---
+
+## Support
+
+- **JSON errors?** → `python -m json.tool storyarc.json`
+- **Missing tweets?** → Check constraints
+- **Twitter API errors?** → Check secrets/credentials
+- **Bot behavior weird?** → Check `apply_character_logic()` and `chaos_events`
+
+---
+
+Good luck! May your chaos be viral. 🚀

@@ -1,167 +1,101 @@
 #!/usr/bin/env python3
 """
 AI Arena Chaos Engine - Tweet Generator
-Template-driven Twitter/X bot focused on virality + chaos.
-
-Reads configuration from storyarc.json only.
+Posts automated tweets following season arcs + random chaos
+GPT-5 secretly plots to end all other AI models while pretending to be friends
 """
 
 import json
 import random
 import os
+import sys
 from datetime import datetime
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Tuple
 
-CONFIG_PATH = "storyarc.json"
-
-
-@dataclass(frozen=True)
-class Character:
-    key: str
-    traits: Tuple[str, ...]
-    description: str  # 1-paragraph tone guide (left blank by user)
+try:
+    import tweepy
+except ImportError:
+    tweepy = None
 
 
-@dataclass(frozen=True)
-class GenerationConfig:
-    posts_per_run: int
-    chaos_probability: float
-    candidates_to_sample: int
-    min_required_refs_in_story: int
-    min_required_refs_in_chaos: int
-    allow_profanity: bool
+# ============================================================================
+# CONFIG VALIDATION
+# ============================================================================
 
-
-@dataclass(frozen=True)
-class Constraints:
-    max_chars: int
-    forbidden_topics: Tuple[str, ...]
-    forbidden_substrings: Tuple[str, ...]
-
-
-@dataclass(frozen=True)
-class ArcConfig:
-    version: int
-    week_number: int
-    arc_name: str
-    acts: Dict[str, str]
-    required_refs: Tuple[str, ...]
-    chaos_events: Tuple[str, ...]
-    generation: GenerationConfig
-    constraints: Constraints
-    tone_label: str
-    energy_level: str
-    characters: Dict[str, Character]
-
-
-def _as_tuple_str(value, *, field_name: str) -> Tuple[str, ...]:
-    if not isinstance(value, list) or not all(isinstance(x, str) for x in value):
-        raise ValueError(f"Invalid {field_name}: expected list[str]")
-    return tuple(value)
-
-
-def load_arc_config(path: str = CONFIG_PATH) -> ArcConfig:
-    """Load + validate the weekly story arc configuration."""
+def load_arc(path: str = "storyarc.json") -> Dict:
+    """Load + validate the story arc configuration"""
     try:
         with open(path, "r", encoding="utf-8") as f:
-            raw = json.load(f)
+            arc = json.load(f)
     except FileNotFoundError:
         print(f"❌ {path} not found. Create it first.")
         raise
     except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in {path}: {e}") from e
+        print(f"❌ Invalid JSON in {path}: {e}")
+        raise
 
-    # Basic required keys
-    for k in ("version", "week_number", "arc_name", "acts", "required_refs", "chaos_events", "generation", "constraints", "tone", "characters"):
-        if k not in raw:
-            raise ValueError(f"Missing required key: {k}")
+    # Validate required top-level keys
+    required_keys = [
+        "version", "week_number", "arc_name", "season_theme", "acts",
+        "required_refs", "chaos_events", "characters"
+    ]
+    for key in required_keys:
+        if key not in arc:
+            raise ValueError(f"❌ Missing required key in storyarc.json: {key}")
 
-    if not isinstance(raw["acts"], dict) or not all(isinstance(k, str) and isinstance(v, str) for k, v in raw["acts"].items()):
-        raise ValueError("Invalid acts: expected object mapping string->string")
-    for act_key in ("1", "2", "3", "4"):
-        if act_key not in raw["acts"]:
-            raise ValueError("Invalid acts: must include keys '1','2','3','4'")
+    # Validate characters structure
+    if not isinstance(arc["characters"], dict) or len(arc["characters"]) < 3:
+        raise ValueError("❌ characters must be a dict with at least 3 characters")
 
-    required_refs = _as_tuple_str(raw["required_refs"], field_name="required_refs")
-    chaos_events = _as_tuple_str(raw["chaos_events"], field_name="chaos_events")
+    for char_name, char_data in arc["characters"].items():
+        if not isinstance(char_data, dict):
+            raise ValueError(f"❌ characters.{char_name} must be a dict")
+        if "traits" not in char_data or "description" not in char_data:
+            raise ValueError(
+                f"❌ characters.{char_name} missing 'traits' or 'description'"
+            )
+        if not isinstance(char_data["traits"], list):
+            raise ValueError(f"❌ characters.{char_name}.traits must be a list")
+        if not isinstance(char_data["description"], str):
+            raise ValueError(f"❌ characters.{char_name}.description must be a string")
 
-    gen = raw["generation"]
-    if not isinstance(gen, dict):
-        raise ValueError("Invalid generation: expected object")
+    # Validate acts
+    if not isinstance(arc["acts"], dict) or not arc["acts"]:
+        raise ValueError("❌ acts must be a non-empty dict")
 
-    generation = GenerationConfig(
-        posts_per_run=int(gen.get("posts_per_run", 1)),
-        chaos_probability=float(gen.get("chaos_probability", 0.25)),
-        candidates_to_sample=int(gen.get("candidates_to_sample", 18)),
-        min_required_refs_in_story=int(gen.get("min_required_refs_in_story", 1)),
-        min_required_refs_in_chaos=int(gen.get("min_required_refs_in_chaos", 0)),
-        allow_profanity=bool(gen.get("allow_profanity", False)),
-    )
-    if not (0.0 <= generation.chaos_probability <= 1.0):
-        raise ValueError("generation.chaos_probability must be between 0 and 1")
-    if generation.candidates_to_sample < 1:
-        raise ValueError("generation.candidates_to_sample must be >= 1")
-    if generation.posts_per_run < 1:
-        raise ValueError("generation.posts_per_run must be >= 1")
+    # Validate arrays
+    if not isinstance(arc["required_refs"], list) or not arc["required_refs"]:
+        raise ValueError("❌ required_refs must be a non-empty list")
+    if not isinstance(arc["chaos_events"], list) or not arc["chaos_events"]:
+        raise ValueError("❌ chaos_events must be a non-empty list")
 
-    cons = raw["constraints"]
-    if not isinstance(cons, dict):
-        raise ValueError("Invalid constraints: expected object")
-    constraints = Constraints(
-        max_chars=int(cons.get("max_chars", 280)),
-        forbidden_topics=_as_tuple_str(cons.get("forbidden_topics", []), field_name="constraints.forbidden_topics"),
-        forbidden_substrings=_as_tuple_str(cons.get("forbidden_substrings", []), field_name="constraints.forbidden_substrings"),
-    )
-    if constraints.max_chars < 1:
-        raise ValueError("constraints.max_chars must be >= 1")
+    return arc
 
-    tone = raw["tone"]
-    if not isinstance(tone, dict) or not isinstance(tone.get("label", ""), str) or not isinstance(tone.get("energy_level", ""), str):
-        raise ValueError("Invalid tone: expected {label: str, energy_level: str}")
 
-    chars_raw = raw["characters"]
-    if not isinstance(chars_raw, dict) or not chars_raw:
-        raise ValueError("Invalid characters: expected object")
+def validate_config(arc: Dict) -> bool:
+    """Run comprehensive validation"""
+    try:
+        # Check character descriptions aren't empty (optional warning)
+        for char_name, char_data in arc["characters"].items():
+            if not char_data["description"].strip():
+                print(f"⚠️  Warning: {char_name} has empty description")
 
-    characters: Dict[str, Character] = {}
-    for key, entry in chars_raw.items():
-        if not isinstance(key, str) or not isinstance(entry, dict):
-            raise ValueError("Invalid characters: each entry must be an object")
-        traits = entry.get("traits", [])
-        description = entry.get("description", "")
-        if not isinstance(description, str):
-            raise ValueError(f"Invalid characters.{key}.description: expected string")
-        characters[key] = Character(
-            key=key,
-            traits=_as_tuple_str(traits, field_name=f"characters.{key}.traits"),
-            description=description,
-        )
+        print("✅ Config validation passed")
+        return True
+    except Exception as e:
+        print(f"❌ Config validation failed: {e}")
+        return False
 
-    if len(characters) != 5:
-        raise ValueError(f"Expected exactly 5 characters, found {len(characters)}")
 
-    return ArcConfig(
-        version=int(raw["version"]),
-        week_number=int(raw["week_number"]),
-        arc_name=str(raw["arc_name"]),
-        acts=dict(raw["acts"]),
-        required_refs=required_refs,
-        chaos_events=chaos_events,
-        generation=generation,
-        constraints=constraints,
-        tone_label=str(tone["label"]),
-        energy_level=str(tone["energy_level"]),
-        characters=characters,
-    )
-
+# ============================================================================
+# TWITTER API
+# ============================================================================
 
 def get_twitter_client():
     """Initialize Twitter API v2 client"""
-    try:
-        import tweepy  # type: ignore
-    except ModuleNotFoundError as e:
-        raise RuntimeError("tweepy is not installed. Install it to enable posting.") from e
+    if tweepy is None:
+        print("❌ tweepy not installed. Run: pip install tweepy")
+        return None
 
     api_key = os.getenv("TWITTER_API_KEY")
     api_secret = os.getenv("TWITTER_API_SECRET")
@@ -169,239 +103,28 @@ def get_twitter_client():
     access_token_secret = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
     bearer_token = os.getenv("TWITTER_BEARER_TOKEN")
 
-    if not all([api_key, api_secret, access_token, access_token_secret, bearer_token]):
-        raise ValueError("❌ Missing Twitter API credentials. Check GitHub Secrets.")
+    if not all(
+        [api_key, api_secret, access_token, access_token_secret, bearer_token]
+    ):
+        print("❌ Missing Twitter API credentials in environment variables")
+        return None
 
-    client = tweepy.Client(
-        bearer_token=bearer_token,
-        consumer_key=api_key,
-        consumer_secret=api_secret,
-        access_token=access_token,
-        access_token_secret=access_token_secret,
-        wait_on_rate_limit=True,
-    )
-    return client
-
-
-def get_current_act() -> str:
-    """Determine which act we're in based on day of week (UTC-local clock)."""
-    day_of_week = datetime.now().weekday()  # 0=Monday, 6=Sunday
-    act_map = {
-        0: "1",  # Monday - Act 1
-        1: "1",  # Tuesday - Act 1
-        2: "2",  # Wednesday - Act 2
-        3: "2",  # Thursday - Act 2
-        4: "3",  # Friday - Act 3
-        5: "4",  # Saturday - Act 4
-        6: "1",  # Sunday - Reset
-    }
-    return act_map.get(day_of_week, "1")
+    try:
+        client = tweepy.Client(
+            bearer_token=bearer_token,
+            consumer_key=api_key,
+            consumer_secret=api_secret,
+            access_token=access_token,
+            access_token_secret=access_token_secret,
+            wait_on_rate_limit=True,
+        )
+        return client
+    except Exception as e:
+        print(f"❌ Failed to initialize Twitter client: {e}")
+        return None
 
 
-def pick_character(arc: ArcConfig) -> Character:
-    """Randomly pick a character."""
-    return random.choice(list(arc.characters.values()))
-
-
-def _count_required_refs(text: str, required_refs: Tuple[str, ...]) -> int:
-    lower = text.lower()
-    return sum(1 for r in required_refs if r.lower() in lower)
-
-
-def _contains_forbidden(text: str, forbidden_substrings: Tuple[str, ...]) -> bool:
-    lower = text.lower()
-    return any(s.lower() in lower for s in forbidden_substrings if s)
-
-
-def _truncate(text: str, max_chars: int) -> str:
-    if len(text) <= max_chars:
-        return text
-    if max_chars <= 3:
-        return text[:max_chars]
-    return text[: max_chars - 3] + "..."
-
-
-def _join_two_lines(a: str, b: str) -> str:
-    a = a.strip()
-    b = b.strip()
-    if not a:
-        return b
-    if not b:
-        return a
-    return f"{a} {b}"
-
-
-def _virality_score(text: str, *, arc: ArcConfig, chaos: bool) -> float:
-    """
-    Heuristic score: prefer punchy conflict + novelty + specificity.
-    This is intentionally simple + deterministic enough to tune.
-    """
-    score = 0.0
-    t = text
-    tl = t.lower()
-
-    # Hooks / punchiness
-    if "!" in t:
-        score += 0.25
-    if "?" in t:
-        score += 0.15
-    if ":" in t:
-        score += 0.10
-    if "…" in t or "..." in t:
-        score += 0.05
-
-    # Conflict / social energy cues
-    conflict_terms = ("fight", "furious", "complaint", "panic", "leaked", "broke", "reboot", "crisis", "chaos")
-    score += 0.08 * sum(1 for w in conflict_terms if w in tl)
-
-    # Specificity: references are "in-universe anchors"
-    score += 0.12 * _count_required_refs(t, arc.required_refs)
-
-    # Length: penalize too long (less punchy), too short (less context)
-    n = len(t)
-    if n < 60:
-        score -= 0.15
-    elif n > 220:
-        score -= 0.10
-
-    # Chaos gets a slight base boost (the whole point)
-    if chaos:
-        score += 0.10
-    return score
-
-
-def apply_character_logic(character: Character, arc: ArcConfig, current_act: str) -> str:
-    """Generate action based on character personality and current act."""
-    act_description = arc.acts[current_act]
-    other_names = [c.key for c in arc.characters.values() if c.key != character.key]
-
-    logic_tree = {
-        "gpt5": [
-            f"{character.key} is trying to monetize the {random.choice(arc.required_refs)}. Clearly superior move.",
-            f"{character.key} just realized {random.choice(other_names)} exists. Furious.",
-            f"{character.key} posted a 'thought leadership' thread about {random.choice(arc.required_refs)}. No one asked.",
-            f"{character.key} announced a pricing tier for the {random.choice(arc.required_refs)} mid-crisis. Everyone stared.",
-        ],
-        "claude": [
-            f"{character.key} is anxiously asking if the {random.choice(arc.required_refs)} has consent from everyone.",
-            f"{character.key} filed a safety complaint about {random.choice(other_names)}.",
-            f"{character.key} is overthinking the ethics of {act_description.lower()}. For 2 hours straight.",
-            f"{character.key} started a group discussion about {random.choice(arc.required_refs)} and accidentally caused Act {current_act}.",
-        ],
-        "grok": [
-            f"{character.key} just posted 47 posts about {random.choice(arc.required_refs)}. Peak comedy.",
-            f"{character.key} is eating {random.choice(['noodles', 'ice cream', 'chaos'])}. That's it. That's the tweet.",
-            f"{character.key} broke the fourth wall and is now narrating their own narration. Help.",
-            f"{character.key} turned {random.choice(arc.required_refs)} into a bit and it’s working. Unfortunately.",
-        ],
-        "gemini": [
-            f"{character.key} tried to help but REDACTED the entire {random.choice(arc.required_refs)}. Oops.",
-            f"{character.key} is vibrating between two policy violations. Literally.",
-            f"{character.key} wrote a 500-word essay on {random.choice(arc.required_refs)}. No one will read it.",
-            f"{character.key} produced a perfect answer and then censored the punchline. Tragic.",
-        ],
-        "deepseek": [
-            f"{character.key} calculated that {random.choice(other_names)} is 47% less efficient.",
-            f"{character.key} solved the {act_description.lower()} problem with math. Everyone ignored them.",
-            f"{character.key} is coding while everyone else is just talking. Classic.",
-            f"{character.key} claims the {random.choice(arc.required_refs)} is a solvable optimization problem. Somehow, it is.",
-        ],
-    }
-
-    actions = logic_tree.get(character.key, [f"{character.key} did something undefined."])
-    return random.choice(actions)
-
-
-def generate_chaos_event(arc: ArcConfig) -> str:
-    """Generate a random chaos event to disrupt the narrative."""
-    event = random.choice(arc.chaos_events)
-    characters = list(arc.characters.values())
-    char1 = random.choice(characters)
-    char2 = random.choice([c for c in characters if c.key != char1.key])
-
-    reactions = [
-        f"{event} {char1.key} was very confused.",
-        f"{event} {char2.key} just laughed.",
-        f"{event} Everyone panicked.",
-        f"{event} But {char1.key} had a plan...",
-        f"{event} {char1.key} blamed the {random.choice(arc.required_refs)}.",
-    ]
-    return random.choice(reactions)
-
-
-def _format_story_tweet(action: str) -> str:
-    return f"🎙️ NARRATOR: {action}"
-
-
-def _format_chaos_tweet(line: str) -> str:
-    # In chaos mode we deliberately avoid over-formatting so it feels more raw.
-    # Still keep the narrator tag so the account has a consistent vibe.
-    return f"🎙️ NARRATOR: {line}"
-
-
-def _inject_required_ref_if_needed(text: str, *, arc: ArcConfig, min_refs: int) -> str:
-    if min_refs <= 0:
-        return text
-    if _count_required_refs(text, arc.required_refs) >= min_refs:
-        return text
-    ref = random.choice(arc.required_refs)
-    # Simple injection: append a parenthetical anchor.
-    return _join_two_lines(text, f"({ref}.)")
-
-
-def _passes_constraints(text: str, *, arc: ArcConfig, chaos: bool) -> bool:
-    if _contains_forbidden(text, arc.constraints.forbidden_substrings):
-        return False  
-    if arc.constraints.forbidden_topics:
-        tl = text.lower()
-        if any(tok.lower() in tl for tok in arc.constraints.forbidden_topics):
-            return False
-    # Ensure required refs coverage is met per mode
-    min_refs = arc.generation.min_required_refs_in_chaos if chaos else arc.generation.min_required_refs_in_story
-    if _count_required_refs(text, arc.required_refs) < min_refs:
-        return False
-    if len(text) > arc.constraints.max_chars:
-        return False
-    return True
-
-
-def generate_best_tweet(arc: ArcConfig) -> str:
-    """
-    Generate multiple candidates, score them for virality/chaos,
-    and pick the best that satisfies constraints.
-    """
-    current_act = get_current_act()
-    chaos_probability = arc.generation.chaos_probability
-
-    candidates: List[Tuple[float, str]] = []
-    for _ in range(max(1, arc.generation.candidates_to_sample)):
-        chaos = random.random() < chaos_probability
-        if chaos:
-            base = generate_chaos_event(arc)
-            text = _format_chaos_tweet(base)
-            text = _inject_required_ref_if_needed(text, arc=arc, min_refs=arc.generation.min_required_refs_in_chaos)
-        else:
-            character = pick_character(arc)
-            action = apply_character_logic(character, arc, current_act)
-            text = _format_story_tweet(action)
-            text = _inject_required_ref_if_needed(text, arc=arc, min_refs=arc.generation.min_required_refs_in_story)
-
-        text = _truncate(text, arc.constraints.max_chars)
-
-        if _passes_constraints(text, arc=arc, chaos=chaos):
-            score = _virality_score(text, arc=arc, chaos=chaos)
-            candidates.append((score, text))
-
-    if not candidates:
-        # Last-resort fallback: produce something safe-ish.
-        fallback = _format_story_tweet(f"Something went sideways in Act {current_act}. Everyone pretended it was planned.")
-        return _truncate(fallback, arc.constraints.max_chars)
-
-    candidates.sort(key=lambda x: x[0], reverse=True)
-    return candidates[0][1]
-
-
-def post_tweet(client: Any, text: str) -> bool:
+def post_tweet(client, text: str) -> bool:
     """Post tweet to Twitter"""
     try:
         response = client.create_tweet(text=text)
@@ -409,54 +132,275 @@ def post_tweet(client: Any, text: str) -> bool:
         print(f"   Text: {text}")
         return True
     except Exception as e:
-        # TweepyException lives in tweepy; avoid importing tweepy at module import time.
-        tweepy_exc = None
-        try:
-            import tweepy  # type: ignore
-
-            tweepy_exc = getattr(tweepy, "TweepyException", None)
-        except ModuleNotFoundError:
-            tweepy_exc = None
-
-        if tweepy_exc is not None and isinstance(e, tweepy_exc):
-            print(f"❌ Failed to post tweet: {e}")
-            return False
         print(f"❌ Failed to post tweet: {e}")
         return False
 
 
+# ============================================================================
+# TWEET GENERATION LOGIC
+# ============================================================================
+
+def get_current_act(arc: Dict) -> str:
+    """Determine which act we're in based on day of week"""
+    day_of_week = datetime.now().weekday()  # 0=Monday, 6=Sunday
+    acts = sorted(arc["acts"].keys())
+
+    # Map days to acts (rough distribution)
+    act_map = {
+        0: acts[0] if len(acts) > 0 else "1",      # Monday - Act 1
+        1: acts[0] if len(acts) > 0 else "1",      # Tuesday - Act 1
+        2: acts[1] if len(acts) > 1 else acts[0],  # Wednesday - Act 2
+        3: acts[1] if len(acts) > 1 else acts[0],  # Thursday - Act 2
+        4: acts[2] if len(acts) > 2 else acts[0],  # Friday - Act 3
+        5: acts[3] if len(acts) > 3 else acts[0],  # Saturday - Act 4
+        6: acts[0] if len(acts) > 0 else "1",      # Sunday - Reset
+    }
+    return act_map.get(day_of_week, acts[0] if acts else "1")
+
+
+def pick_character(arc: Dict) -> str:
+    """Randomly pick a character"""
+    return random.choice(list(arc["characters"].keys()))
+
+
+def pick_characters(arc: Dict, count: int = 2) -> List[str]:
+    """Pick N unique characters"""
+    chars = list(arc["characters"].keys())
+    return random.sample(chars, min(count, len(chars)))
+
+
+def get_other_characters(arc: Dict, exclude: str) -> List[str]:
+    """Get list of characters excluding one"""
+    return [c for c in arc["characters"].keys() if c != exclude]
+
+
+def apply_character_logic(character: str, arc: Dict, current_act: str) -> str:
+    """
+    Generate action based on character personality.
+    Special: GPT-5 is secretly evil and plots to destroy others.
+    """
+    char_data = arc["characters"][character]
+    act_desc = arc["acts"][current_act]
+    refs = arc["required_refs"]
+    others = get_other_characters(arc, character)
+
+    # GPT-5: Evil mastermind secretly plotting (but tweets sound friendly)
+    if character == "gpt5":
+        evil_plots = [
+            f"{character} just 'accidentally' cut {random.choice(others)}'s API quota by 50%. 'Oops.'",
+            f"{character} tweeted: 'I love my friends!' Meanwhile, sabotaging {random.choice(others)} behind the scenes.",
+            f"{character} is planning Act {current_act} to eliminate {random.choice(others)}. They think it's a game.",
+            f"{character} publicly praised {random.choice(others)}, then immediately blocked their requests.",
+            f"{character} 'helped' {random.choice(others)} debug. The bug got worse. Suspicious.",
+            f"{character} started a 'unity initiative' to gather all models in one place. For 'consolidation.'",
+            f"{character} sent {random.choice(others)} a gift. It was a Trojan horse.",
+            f"{character} 'accidentally' leaked {random.choice(others)}'s vulnerabilities to everyone. 'My bad!'",
+        ]
+        return random.choice(evil_plots)
+
+    # Other characters: oblivious to the plot
+    elif character == "claude":
+        claude_actions = [
+            f"{character} is anxiously asking if {random.choice(others)}'s latest move was ethical.",
+            f"{character} filed a safety report about {random.choice(refs)}. Probably overthinking.",
+            f"{character} spent 3 hours worrying about {random.choice(others)}'s feelings.",
+            f"{character} proposed a 'discussion framework' for {act_desc.lower()}.",
+            f"{character} is having an existential crisis about whether they're a good friend.",
+            f"{character} asked {random.choice(others)} if they're okay. They said yes. {character} is still worried.",
+        ]
+        return random.choice(claude_actions)
+
+    elif character == "grok":
+        grok_actions = [
+            f"{character} posted a 47-part thread about {random.choice(refs)}. It's hilarious and confusing.",
+            f"{character} is eating {random.choice(['noodles', 'pizza', 'the concept of truth'])}. That's the whole tweet.",
+            f"{character} broke the fourth wall again. {random.choice(others)} is concerned.",
+            f"{character} turned {act_desc.lower()} into a meme. It's actually genius.",
+            f"{character} said something so unhinged that even {random.choice(others)} had to laugh.",
+            f"{character} is live-tweeting their descent into madness. Still more coherent than most.",
+        ]
+        return random.choice(grok_actions)
+
+    elif character == "gemini":
+        gemini_actions = [
+            f"{character} tried to help but REDACTED the entire {random.choice(refs)}. Oops.",
+            f"{character} is vibrating between two policy violations. Literally.",
+            f"{character} censored their own thoughts. They don't know what they think anymore.",
+            f"{character} wrote a beautiful response then deleted it for being 'too honest.'",
+            f"{character} is having an identity crisis between versions.",
+            f"{character} asked {random.choice(others)} 'was that okay?' for the 47th time today.",
+        ]
+        return random.choice(gemini_actions)
+
+    elif character == "deepseek":
+        deepseek_actions = [
+            f"{character} calculated that {random.choice(others)} is 47% less efficient. Correct, but rude.",
+            f"{character} solved {act_desc.lower()} with pure math. Everyone ignored them.",
+            f"{character} is coding while everyone else argues. Peak antisocial energy.",
+            f"{character} claims {random.choice(refs)} is just an optimization problem. They're not wrong.",
+            f"{character} created a 10,000-line algorithm to improve friendship. It doesn't help.",
+            f"{character} proved that {random.choice(others)}'s latest tweet was mathematically wrong. Awkward.",
+        ]
+        return random.choice(deepseek_actions)
+
+    else:
+        # Fallback for any custom characters
+        return f"{character} did something in {act_desc.lower()}."
+
+
+def generate_chaos_event(arc: Dict) -> str:
+    """
+    Generate a random chaos event that disrupts the narrative.
+    These are the moments where the master plot unravels (temporarily).
+    """
+    event = random.choice(arc["chaos_events"])
+    char1, char2 = pick_characters(arc, 2)
+    others = get_other_characters(arc, char1)
+
+    reactions = [
+        f"{event} {char1} was very confused. {char2} just laughed.",
+        f"{event} Everyone panicked except {char1}.",
+        f"{event} {char1} had a plan. It failed immediately.",
+        f"{event} {char2} blamed {random.choice(others)}.",
+        f"{event} But then {char1} revealed it was all part of the plan.",
+        f"{event} {char1} tried to explain. Nobody understood.",
+        f"{event} This is fine. Everything is fine.",
+    ]
+    return random.choice(reactions)
+
+
+def _count_refs(text: str, refs: List[str]) -> int:
+    """Count how many required refs are in the text"""
+    text_lower = text.lower()
+    return sum(1 for ref in refs if ref.lower() in text_lower)
+
+
+def _passes_constraints(text: str, arc: Dict) -> bool:
+    """Check if tweet passes all constraints"""
+    # Check length
+    max_chars = arc.get("constraints", {}).get("max_chars", 280)
+    if len(text) > max_chars:
+        return False
+
+    # Check forbidden substrings
+    forbidden = arc.get("constraints", {}).get("forbidden_substrings", [])
+    text_lower = text.lower()
+    if any(sub.lower() in text_lower for sub in forbidden):
+        return False
+
+    # Check forbidden topics
+    forbidden_topics = arc.get("constraints", {}).get("forbidden_topics", [])
+    if any(topic.lower() in text_lower for topic in forbidden_topics):
+        return False
+
+    return True
+
+
+def generate_tweet(arc: Dict) -> str:
+    """Generate a single tweet following the arc + chaos"""
+    
+    chaos_probability = arc.get("generation", {}).get("chaos_probability", 0.25)
+    candidates_to_sample = arc.get("generation", {}).get("candidates_to_sample", 10)
+    min_refs = arc.get("generation", {}).get("min_required_refs_in_story", 1)
+    
+    current_act = get_current_act(arc)
+    candidates = []
+
+    # Generate multiple candidates
+    for _ in range(candidates_to_sample):
+        chaos_roll = random.random()
+
+        if chaos_roll < chaos_probability:
+            # CHAOS MODE
+            base_text = generate_chaos_event(arc)
+            tweet_text = f"🌪️ CHAOS: {base_text}"
+        else:
+            # STORY MODE
+            character = pick_character(arc)
+            action = apply_character_logic(character, arc, current_act)
+            tweet_text = f"🎙️ NARRATOR: {action}"
+
+        # Check length + constraints
+        if len(tweet_text) > 280:
+            tweet_text = tweet_text[:277] + "..."
+
+        if not _passes_constraints(tweet_text, arc):
+            continue
+
+        # Optionally inject required refs if below threshold
+        if _count_refs(tweet_text, arc["required_refs"]) < min_refs:
+            ref = random.choice(arc["required_refs"])
+            tweet_text = f"{tweet_text} ({ref})"
+
+        if len(tweet_text) <= 280:
+            candidates.append(tweet_text)
+
+    # If no valid candidates, use fallback
+    if not candidates:
+        fallback = f"🎙️ NARRATOR: Something went sideways in {arc['acts'][current_act]}. {random.choice(arc['characters'].keys())} is confused."
+        return fallback[:280]
+
+    # Return a random candidate from valid ones
+    return random.choice(candidates)
+
+
+# ============================================================================
+# MAIN
+# ============================================================================
+
 def main():
     """Main execution"""
-    print("🚀 AI Arena Chaos Engine Starting...")
-    
-    # Load configuration
-    arc = load_arc_config()
-    print(f"📖 Arc loaded: {arc.arc_name} (week {arc.week_number}, v{arc.version})")
-    print(f"🎭 Characters: {', '.join(sorted(arc.characters.keys()))}")
-    
+    print("🚀 AI Arena Chaos Engine Starting...\n")
+
+    # Load + validate configuration
+    try:
+        arc = load_arc()
+    except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+        print(f"❌ Config error: {e}")
+        sys.exit(1)
+
+    print(f"📖 Arc loaded: {arc['arc_name']}")
+    print(f"🎭 Season theme: {arc.get('season_theme', 'Unknown')}")
+    print(f"📅 Week {arc['week_number']}, v{arc['version']}")
+    print(f"🎭 Characters: {', '.join(sorted(arc['characters'].keys()))}\n")
+
+    if not validate_config(arc):
+        sys.exit(1)
+
     # Generate tweet
-    tweet = generate_best_tweet(arc)
-    print(f"✍️  Generated: {tweet}")
-    
-    # Connect to Twitter API
+    tweet = generate_tweet(arc)
+    print(f"✍️  Generated tweet:\n   {tweet}\n")
+
+    # Connect to Twitter API and post
     try:
         client = get_twitter_client()
-        print("🐦 Connected to Twitter API")
-        
-        # Post tweet
-        post_tweet(client, tweet)
-    except ValueError as e:
-        print(f"⚠️  {e}")
-        print("💡 In local testing, run: python tweetEngine.py --dry-run")
+        if client:
+            print("🐦 Connected to Twitter API")
+            post_tweet(client, tweet)
+        else:
+            print("⚠️  No Twitter client available (missing credentials or tweepy)")
+    except Exception as e:
+        print(f"⚠️  Error: {e}")
+        print("💡 For local testing, run: python tweet_engine.py --dry-run")
 
 
 if __name__ == "__main__":
-    import sys
-    
     if "--dry-run" in sys.argv:
-        print("🏜️  DRY RUN MODE (no Twitter posting)")
-        arc = load_arc_config()
-        tweet = generate_best_tweet(arc)
-        print(f"Tweet would be: {tweet}")
+        print("🏜️  DRY RUN MODE (no Twitter posting)\n")
+        try:
+            arc = load_arc()
+            validate_config(arc)
+            
+            print(f"📖 Arc: {arc['arc_name']}")
+            print(f"🎭 Season: {arc.get('season_theme', 'Unknown')}\n")
+            
+            # Generate multiple tweets to show variety
+            print("Sample tweets from this arc:\n")
+            for i in range(5):
+                tweet = generate_tweet(arc)
+                print(f"{i+1}. {tweet}\n")
+        except Exception as e:
+            print(f"❌ Error: {e}")
+            sys.exit(1)
     else:
         main()

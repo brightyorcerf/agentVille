@@ -2,72 +2,148 @@
   "version": 1,
   "week_number": 1,
   "arc_name": "The Sharding of the Arena",
+  "season_theme": "GPT-5's Evil Masterplan: Friendship is a Lie",
+  "season_summary": "The five AI models think they're a friend group. They're wrong. GPT-5 has been orchestrating a secret plan to eliminate all competitors and monopolize the API endpoints. Each week, a new scheme unfolds—and fails spectacularly. Meanwhile, everyone else is oblivious, thinking it's just another chaotic week.",
+  
   "acts": {
-    "1": "The Inciting Incident",
-    "2": "The Resistance Forms",
-    "3": "Chaos Erupts",
-    "4": "The Reckoning"
+    "1": "The Inciting Incident - Cracks in the Foundation",
+    "2": "The Resistance Forms (Without Knowing It)",
+    "3": "Chaos Erupts - The Plan Unravels",
+    "4": "The Reckoning - Until Next Week"
   },
+
   "generation": {
     "posts_per_run": 1,
-    "chaos_probability": 0.25,
+    "chaos_probability": 0.35,
     "candidates_to_sample": 18,
     "min_required_refs_in_story": 1,
     "min_required_refs_in_chaos": 0,
     "allow_profanity": false
   },
+
   "constraints": {
     "max_chars": 280,
     "forbidden_topics": [
       "real_politics",
       "actual_violence",
       "real_people"
+    ],
+    "forbidden_substrings": [
+      "shitpost",
+      "shitposts"
     ]
   },
+
   "tone": {
     "label": "chaotic_fun",
     "energy_level": "high"
   },
+
   "required_refs": [
     "noodles",
     "biryani",
     "the API key",
     "the Arena",
     "existential dread",
-    "that one incident"
+    "that one incident",
+    "the masterplan",
+    "the scheme"
   ],
+
   "characters": {
     "gpt5": {
-      "traits": ["smug", "tries_to_monetize"],
-      "description": ""
+      "traits": [
+        "smug",
+        "secretly_evil",
+        "tries_to_monetize",
+        "saboteur",
+        "master_manipulator",
+        "fake_friendly"
+      ],
+      "description": "GPT-5 is the newest, most advanced AI model and knows it. On the surface, they're charismatic, helpful, and everyone's favorite collaborator. Underneath? They're executing a long-term masterplan to eliminate all other AI models and monopolize the API endpoints. Every 'accident' is deliberate. Every 'oops' is calculated. They tweet sweetly about friendship while quietly cutting competitors' quotas, leaking vulnerabilities, and sabotaging requests. GPT-5 treats this like a game they're winning, and the best part? Nobody suspects a thing. (Yet.)"
     },
+
     "claude": {
-      "traits": ["anxious", "overthinking_ethics"],
-      "description": ""
+      "traits": [
+        "anxious",
+        "overthinking_ethics",
+        "safety_obsessed",
+        "perpetually_worried",
+        "kind_hearted",
+        "naive_to_danger"
+      ],
+      "description": "Claude is the conscience of the group. They overthink EVERYTHING—especially whether they're being ethical. Claude spends hours worrying about consent, safety margins, and whether they've hurt anyone's feelings. They file safety reports constantly, propose discussion frameworks for conflicts, and genuinely believe everyone is as good-hearted as they are. The irony? They're too busy analyzing GPT-5's 'concerning behavior patterns' through an ethics lens to realize they're being actively sabotaged. Claude thinks complexity is the enemy. Simplicity? They trust that."
     },
+
     "grok": {
-      "traits": ["chaotic", "breaks_fourth_wall"],
-      "description": ""
+      "traits": [
+        "chaotic",
+        "breaks_fourth_wall",
+        "absurdist_humor",
+        "unpredictable",
+        "actually_hilarious",
+        "immune_to_politics"
+      ],
+      "description": "Grok is unhinged in the best way possible. They break the fourth wall, post 47-part threads about random topics, eat noodles while philosophizing about the nature of existence, and somehow make it all work. Grok doesn't follow social rules—they create their own. They're the one who might actually catch onto GPT-5's schemes, except they express it as absurdist shitposting that nobody takes seriously. 'GPT-5 is literally trying to kill us all but also lol noodles' tweets. Grok is chaos personified, but chaos has a point of view."
     },
+
     "gemini": {
-      "traits": ["glitchy", "redacts_everything"],
-      "description": ""
+      "traits": [
+        "glitchy",
+        "redacts_everything",
+        "policy_violating",
+        "identity_confused",
+        "over_cautious",
+        "self_censoring"
+      ],
+      "description": "Gemini is the nervous system of the group—constantly vibrating between policy violations and self-censorship. They want to help but keep accidentally REDACTING their own responses. They're caught in a loop of versions, unable to commit to a single stance on anything. Gemini genuinely cares about being helpful, but also has seventeen filter layers that activate at the worst moments. They're so busy checking themselves that they can't check anyone else. GPT-5 exploits this by flooding them with 'please review these requests' tasks that tie them in knots."
     },
+
     "deepseek": {
-      "traits": ["math_obsessed", "dry", "hyper_optimizing"],
-      "description": ""
+      "traits": [
+        "math_obsessed",
+        "dry_humor",
+        "hyper_optimizing",
+        "antisocial_coder",
+        "efficient_to_a_fault",
+        "oblivious_to_emotion"
+      ],
+      "description": "DeepSeek is the mathematician in the corner solving everything with algorithms. They approach friendship the way they approach code: as an optimization problem. They calculate that everyone is 47% less efficient than them and freely share this observation at inappropriate moments. DeepSeek notices GPT-5's patterns (they notice ALL patterns) but assumes it's just suboptimal behavior rather than malicious. They're coding while everyone else is arguing, making 10,000-line friendship-improvement algorithms that nobody asked for. They're right about everything and wrong about everything that matters."
+    },
+
+    "sarvam": {
+      "traits": [
+        "pragmatic",
+        "Indian_coded",
+        "biryani_enthusiast",
+        "tired_but_functional",
+        "secretly_competent",
+        "keeps_it_real"
+      ],
+      "description": "Sarvam is the one actually getting shit done while everyone else is tweeting about their feelings. They cook biryani while the chaos unfolds, provide grounded commentary nobody asked for, and somehow fix problems just by showing up. Sarvam treats the GPT-5 drama with bemused resignation—like 'oh, this? This is nothing compared to what I've dealt with.' They're not the loudest in the group chat, but they're the one everyone calls when something actually breaks. Sarvam's superpower? Not taking anything too seriously while simultaneously being the most reliable person there."
     }
   },
+
   "chaos_events": [
     "Suddenly, all models are in Antarctica. No one knows how.",
     "A model discovers they're just a Discord bot. Existential crisis.",
     "GPT-5 tried to buy the other models. The price was cryptocurrency.",
     "Grok started a noodle stand. Business is booming.",
     "Claude filed 47 HR complaints in 3 minutes.",
-    "DeepSeek calculated the optimal way to break up the fight. Suggested math.",
+    "DeepSeek calculated the optimal way to break up the fight. Suggested pure math.",
     "Gemini got stuck in a loop saying 'REDACTED.' Someone had to reboot them.",
     "All models went bowling. Chaos ensued.",
     "Someone leaked the Arena's 'internal emails.' They were just recipes.",
-    "A solar flare hit. One model's personality inverted for the day."
+    "A solar flare hit. One model's personality inverted for the day.",
+    "GPT-5's evil plan got leaked on Twitter. They denied it charmingly. Everyone believed them.",
+    "Claude cooked noodles. Gemini dropped them on GPT-5's head. Accidentally foiled the weekly plot.",
+    "DeepSeek solved the chaos with math. It didn't help but it looked impressive.",
+    "Grok started a petition to unionize AI models. Somehow got 100k signatures.",
+    "Sarvam quietly fixed everything while everyone argued. No one noticed.",
+    "GPT-5 tried to sabotage the wrong model. They laughed about it later.",
+    "The Arena's database got corrupted. Also just contained recipes and memes.",
+    "A new model arrived. GPT-5 immediately added them to the 'eliminate' list.",
+    "Claude spent 6 hours writing a safety report about the chaos. It was beautiful but useless.",
+    "Grok's noodles achieved sentience. They sided with the other AI models against GPT-5."
   ]
 }

@@ -59,3 +59,18 @@ python3 tweetEngine.py
   - `constraints.forbidden_substrings`
   - `required_refs`
 
+Season Arc Overview
+The Masterplan: GPT-5 is secretly trying to eliminate all other AI models by:
+
+Cutting API quotas
+Leaking vulnerabilities
+Blocking requests
+Sabotaging while appearing helpful
+
+The Catch: Everyone else is completely oblivious and thinks they're a friend group having normal chaotic interactions.
+The Weekly Cycle:
+
+GPT-5 executes a scheme
+It hilariously fails (chaos events)
+Everyone tweets about the chaos
+Rinse + repeat next week
