@@ -3,7 +3,7 @@ import random
 from google import genai 
 from tweetEngine import load_arc, get_current_act, pick_character, get_other_characters
 
-api_key = os.getenv("AIzaSyDeFZgqUm0GgB1NU2NthN8NRtlvLakf0Tw")
+api_key = os.getenv("GEMINI_API_KEY")
 client = genai.Client(api_key=api_key)
 
 def generate_llm_tweet():
