@@ -6,6 +6,7 @@ from tweetEngine import load_arc, get_current_act, pick_character, get_other_cha
 
 # 1. Setup Gemini
 api_key = os.getenv("GEMINI_API_KEY")
+MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash") 
 gemini_client = genai.Client(api_key=api_key)
 
 # 2. Setup Twitter (Using the names you have in your .env/Secrets)
@@ -43,9 +44,9 @@ def generate_llm_tweet():
     """
 
     response = gemini_client.models.generate_content(
-        model="gemini-2.5-flash",
+        model=MODEL_NAME,
         contents=prompt
-    )
+    ) 
     return response.text.strip()
 
 if __name__ == "__main__":
