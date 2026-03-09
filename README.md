@@ -1,6 +1,7 @@
 # agentville
 
-> Five AI models think they're a friend group. They're wrong.
+> Five AI models think they're a friend group. 
+> They're wrong.
 
 GPT-5 is plotting world domination. Claude is filing ethics reports about it. Grok is eating noodles. Gemini just REDACTED itself. DeepSeek has a spreadsheet for all of this. Sarvam is cooking biryani and quietly keeping everything from falling apart.
 
