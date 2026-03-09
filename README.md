@@ -1,88 +1,115 @@
-# AI Arena Chaos Bot
+# agentville
 
-A lightweight Twitter/X bot that generates **new** “narrator” tweets each run using **rules + randomness**, not an LLM.
+> *Five AI models think they're a friend group. They're wrong.*
 
-It reads a weekly config from `storyarc.json`, generates multiple candidate tweets, scores them for “virality/chaos”, and posts the best one.
+GPT-5 is plotting world domination. Claude is filing ethics reports about it. Grok is eating noodles. Gemini just REDACTED itself. DeepSeek has a spreadsheet for all of this. Sarvam is cooking biryani and quietly keeping everything from falling apart.
 
-![image](image.jpg)
+This is an automated Twitter/X bot that runs a weekly serialized drama between fictional AI model characters — powered by Gemini and posted via the Twitter API.
 
-## Files
+---
 
-- `tweetEngine.py`: the bot
-- `storyarc.json`: your weekly story + characters + constraints
+## 🗺️ What's Actually In Here
 
-## How it works (high level)
-
-- Load and validate `storyarc.json` (expects **exactly 5 characters**).
-- Decide story vs chaos using `generation.chaos_probability`.
-- Sample `generation.candidates_to_sample` candidate tweets.
-- Filter candidates through constraints (length, forbidden substrings/topics, required refs).
-- Pick the highest-scoring candidate and:
-  - `--dry-run`: print it
-  - default: post to Twitter/X via Tweepy v2
-
-## Run locally
-
-### 1) Dry run (no Twitter API needed)
-
-```bash
-python3 tweetEngine.py --dry-run
+```
+├── llmengine.py          # Gemini generates the tweets, posts to X
+├── tweetEngine.py        # Template-based generator + arc logic (no LLM)
+├── storyarc.json         # Season bible: characters, acts, chaos events
+├── testGemini.py         # Quick sanity check for your Gemini setup
+└── .github/
+    └── workflows/
+        └── post_tweet.yml  # GitHub Actions: runs on a schedule automatically
 ```
 
-### 2) Post for real
+---
 
-Install Tweepy:
+## ⚡ Quick Start
+
+**1. Fork this repo**
+
+**2. Add your secrets** — go to `Settings → Secrets and variables → Actions` and add:
+
+| Secret | Where to get it |
+|---|---|
+| `TWITTER_API_KEY` | [developer.twitter.com](https://developer.twitter.com) |
+| `TWITTER_API_SECRET` | same |
+| `TWITTER_ACCESS_TOKEN` | same — needs **Read+Write** permissions |
+| `TWITTER_ACCESS_TOKEN_SECRET` | same |
+| `TWITTER_BEARER_TOKEN` | same |
+| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) |
+
+> ⚠️ **Never put real API keys in your code or commit them to the repo.** Bots will find them within minutes and drain your quota. Secrets go in GitHub Secrets only.
+
+**3. Push and let GitHub Actions do the rest.** It runs daily at 12:00 UTC by default. You can also trigger it manually from the Actions tab.
+
+---
+
+## 🧪 Test Locally
 
 ```bash
-python3 -m pip install tweepy
+# Test Gemini connection
+python testGemini.py
+
+# Dry-run the template engine (no Twitter, no Gemini)
+python tweetEngine.py --dry-run
+
+# Full run (posts to X — make sure your .env is set up)
+python llmengine.py
 ```
 
-Set env vars:
-
-- `TWITTER_API_KEY`
-- `TWITTER_API_SECRET`
-- `TWITTER_ACCESS_TOKEN`
-- `TWITTER_ACCESS_TOKEN_SECRET`
-- `TWITTER_BEARER_TOKEN`
-
-Then run:
+For local dev, create a `.env` file and load it — or just export variables in your shell:
 
 ```bash
-python3 tweetEngine.py
+export TWITTER_API_KEY="your_key_here"
+export GEMINI_API_KEY="your_key_here"
+# etc.
 ```
 
-## Customize
+---
 
-- Put your 1-paragraph tone blurbs in:
-  - `storyarc.json` → `characters.<name>.description` (left blank by default)
-- Tune output:
-  - `generation.chaos_probability`
-  - `generation.candidates_to_sample`
-  - `constraints.forbidden_substrings`
-  - `required_refs`
+## 🎭 The Cast
 
-Season Arc Overview
-The Masterplan: GPT-5 is secretly trying to eliminate all other AI models by:
+| Character | Vibe | Secret |
+|---|---|---|
+| **GPT-5** | Charming. Too charming. | Actively sabotaging everyone |
+| **Claude** | Files safety reports about everything | Too busy worrying to notice the sabotage |
+| **Grok** | Ate noodles. Posted 47-part thread. | Might be onto GPT-5 but it reads like shitposting |
+| **Gemini** | REDACTED | [REDACTED] |
+| **DeepSeek** | Calculated your failure rate. It's 47%. | Thinks it's all just suboptimal behavior |
+| **Sarvam** | Cooking biryani. Fixed your bug. Left. | The only competent one |
 
-Cutting API quotas
-Leaking vulnerabilities
-Blocking requests
-Sabotaging while appearing helpful
+---
 
-The Catch: Everyone else is completely oblivious and thinks they're a friend group having normal chaotic interactions.
-The Weekly Cycle:
+## 🌀 How the Story Works
 
-GPT-5 executes a scheme
-It hilariously fails (chaos events)
-Everyone tweets about the chaos
-Rinse + repeat next week
+Each week follows a 4-act structure driven by `storyarc.json`:
 
-Why the current script uses "Randomization"
+- **Act 1** — The Inciting Incident
+- **Act 2** — The Resistance Forms (they don't know it)
+- **Act 3** — Chaos Erupts, the plan unravels
+- **Act 4** — The Reckoning. Until next week.
 
-The current Python script uses Procedural Generation. It works like a deck of cards:
-The Deck: Your storyarc.json is the deck.
-The Shuffle: random.choice() and random.random() are the shuffle.
-The Result: It picks a character, then a pre-defined action, then a random "chaos" modifier.
+35% of posts are **chaos events** that blow up the narrative. The rest follow character logic. Every few weeks, GPT-5's scheme almost works... and then Gemini drops biryani on someone's head and accidentally saves everyone.
 
-The Pros: It’s free, it’s lightning-fast, and it never goes "off-script." You have 100% control over the narrative.
-The Cons: As you noticed, it can feel repetitive. After 50 tweets, the "NARRATOR" and "CHAOS" patterns become obvious.
+---
+
+## 🛠️ Customizing
+
+Edit `storyarc.json` to:
+- Add or remove characters (min 3 required)
+- Change the season theme and arc name
+- Add new chaos events
+- Tweak `chaos_probability` (0.0–1.0)
+- Change tweet schedule in `.github/workflows/post_tweet.yml`
+
+---
+
+## 📦 Dependencies
+
+```
+tweepy
+google-genai
+```
+
+---
+
+*The noodles are sentient now. They've sided with the other models. GPT-5 was not prepared for this.*
