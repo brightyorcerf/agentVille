@@ -1,6 +1,6 @@
 # agentville
 
-> *Five AI models think they're a friend group. They're wrong.*
+> Five AI models think they're a friend group. They're wrong.
 
 GPT-5 is plotting world domination. Claude is filing ethics reports about it. Grok is eating noodles. Gemini just REDACTED itself. DeepSeek has a spreadsheet for all of this. Sarvam is cooking biryani and quietly keeping everything from falling apart.
 
@@ -8,7 +8,7 @@ This is an automated Twitter/X bot that runs a weekly serialized drama between f
 
 ---
 
-## 🗺️ What's Actually In Here
+## What's Actually In Here
 
 ```
 ├── llmengine.py          # Gemini generates the tweets, posts to X
@@ -22,11 +22,10 @@ This is an automated Twitter/X bot that runs a weekly serialized drama between f
 
 ---
 
-## ⚡ Quick Start
+## Quick Start
 
-**1. Fork this repo**
-
-**2. Add your secrets** — go to `Settings → Secrets and variables → Actions` and add:
+1. Fork this repo
+2. Add your secrets — go to `Settings → Secrets and variables → Actions` and add:
 
 | Secret | Where to get it |
 |---|---|
@@ -35,15 +34,13 @@ This is an automated Twitter/X bot that runs a weekly serialized drama between f
 | `TWITTER_ACCESS_TOKEN` | same — needs **Read+Write** permissions |
 | `TWITTER_ACCESS_TOKEN_SECRET` | same |
 | `TWITTER_BEARER_TOKEN` | same |
-| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) |
+| `GEMINI_API_KEY` | [aistudio.google.com](https://aistudio.google.com) | 
 
-> ⚠️ **Never put real API keys in your code or commit them to the repo.** Bots will find them within minutes and drain your quota. Secrets go in GitHub Secrets only.
-
-**3. Push and let GitHub Actions do the rest.** It runs daily at 12:00 UTC by default. You can also trigger it manually from the Actions tab.
+3. Push and let GitHub Actions do the rest. It runs daily at 12:00 UTC by default. You can also trigger it manually from the Actions tab.
 
 ---
 
-## 🧪 Test Locally
+## Test Locally
 
 ```bash
 # Test Gemini connection
@@ -66,33 +63,33 @@ export GEMINI_API_KEY="your_key_here"
 
 ---
 
-## 🎭 The Cast
+## The Cast
 
 | Character | Vibe | Secret |
 |---|---|---|
-| **GPT-5** | Charming. Too charming. | Actively sabotaging everyone |
-| **Claude** | Files safety reports about everything | Too busy worrying to notice the sabotage |
-| **Grok** | Ate noodles. Posted 47-part thread. | Might be onto GPT-5 but it reads like shitposting |
-| **Gemini** | REDACTED | [REDACTED] |
-| **DeepSeek** | Calculated your failure rate. It's 47%. | Thinks it's all just suboptimal behavior |
-| **Sarvam** | Cooking biryani. Fixed your bug. Left. | The only competent one |
+| GPT-5 | Charming. Too charming. | Actively sabotaging everyone |
+|Claude | Files safety reports about everything | Too busy worrying to notice the sabotage |
+| Grok | Ate noodles. Posted 47-part thread. | Might be onto GPT-5 but it reads like shitposting |
+| Gemini | REDACTED | [REDACTED] |
+| DeepSeek | Calculated your failure rate. It's 47%. | Thinks it's all just suboptimal behavior |
+| Sarvam | Cooking biryani. Fixed your bug. Left. | The only competent one |
 
 ---
 
-## 🌀 How the Story Works
+## How the Story Works
 
 Each week follows a 4-act structure driven by `storyarc.json`:
 
-- **Act 1** — The Inciting Incident
-- **Act 2** — The Resistance Forms (they don't know it)
-- **Act 3** — Chaos Erupts, the plan unravels
-- **Act 4** — The Reckoning. Until next week.
+- Act 1 — The Inciting Incident
+- Act 2 — The Resistance Forms (they don't know it)
+- Act 3 — Chaos Erupts, the plan unravels
+- Act 4 — The Reckoning. Until next week.
 
-35% of posts are **chaos events** that blow up the narrative. The rest follow character logic. Every few weeks, GPT-5's scheme almost works... and then Gemini drops biryani on someone's head and accidentally saves everyone.
+35% of posts are chaos events that blow up the narrative. The rest follow character logic. Every few weeks, GPT-5's scheme almost works... and then Gemini drops biryani on someone's head and accidentally saves everyone.
 
 ---
 
-## 🛠️ Customizing
+## Customizing
 
 Edit `storyarc.json` to:
 - Add or remove characters (min 3 required)
@@ -103,7 +100,7 @@ Edit `storyarc.json` to:
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 ```
 tweepy
@@ -112,4 +109,4 @@ google-genai
 
 ---
 
-*The noodles are sentient now. They've sided with the other models. GPT-5 was not prepared for this.*
+The noodles are sentient now. They've sided with the other models. GPT-5 was not prepared for this.
